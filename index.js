@@ -1,4 +1,5 @@
 require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const session = require("express-session");
@@ -10,9 +11,11 @@ app.set("view engine", "ejs");
 const PORT = 8000;
 
 const URL = require("./models/url");
-
+const User = require("./models/user");
 const urlRoute = require("./routes/url");
 const userRoute = require("./routes/user");
+
+const { checkAuth } = require("./middleware/auth");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -28,20 +31,30 @@ app.use(
 app.use("/url", urlRoute);
 app.use("/user", userRoute);
 
-mongoose.mongoose
+mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
 app.get("/", async (req, res) => {
   const allUrls = await URL.find({});
-  // ye saare urls ko get karta h
+
   res.render("home", {
     urls: allUrls,
   });
 });
-// aur ye render
 
+app.get("/profile", checkAuth, async (req, res) => {
+  const user = await User.findById(req.session.userId);
+
+  if (!user) {
+    return res.redirect("/user/login");
+  }
+
+  res.render("profile", {
+    user,
+  });
+});
 app.get("/:shortId", async (req, res) => {
   const shortId = req.params.shortId;
 
@@ -67,10 +80,3 @@ app.get("/:shortId", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
-
-// // Cookie
-
-// Stored in the browser.
-// Session
-
-// Stored/managed on the server side.

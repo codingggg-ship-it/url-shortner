@@ -66,8 +66,21 @@ async function handleUserLogin(req, res) {
     },
   });
 }
+function handleUserLogout(req, res) {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({
+        error: "Logout failed",
+      });
+    }
 
+    return res.json({
+      message: "Logout successful",
+    });
+  });
+}
 module.exports = {
   handleUserSignup,
   handleUserLogin,
+  handleUserLogout,
 };
